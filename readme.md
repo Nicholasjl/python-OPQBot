@@ -13,10 +13,10 @@
 
 ## 插件开发
 
-在plugins下的所有py文件都会自动注册为插件，使用on_command修饰器指定命令入口，
-示例:@on_command("ECHO"),参数为触发命令 限定大写（输入命令的时候不区分大小写）
-特殊的 @on_command("else")修饰器用来处理例外信息
-函数一个入参message
+#### 在plugins下的所有py文件都会自动注册为插件，使用on_command修饰器指定命令入口，
+#### 示例:@on_command("ECHO"),参数为触发命令 限定大写（输入命令的时候不区分大小写）
+#### 特殊的 @on_command("else")修饰器用来处理例外信息
+#### 函数一个入参message
     '''
     message.isGroup 是否来自群聊
     message.FromQQ 消息来源
