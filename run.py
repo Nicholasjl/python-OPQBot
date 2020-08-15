@@ -12,10 +12,10 @@ from Control import plugin_list
 import plugins 
 from Config import *
 import asyncio
-
-sio = socketio.Client()
+loop = asyncio.get_event_loop()
+sio = socketio.AsyncClient()
 #log文件处理
-logging.basicConfig(format='%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s',level=0)
+logging.basicConfig(format='%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s',level=40)
 class GMess:
     #QQ群消息类型
     def __init__(self,message):
@@ -47,21 +47,21 @@ class Mess:
 # ----------------------------------------------------- 
 # Socketio
 # ----------------------------------------------------- 
-def beat():
+async def beat():
     while(1):
-        sio.emit('GetWebConn',robotQQ)
-        time.sleep(60)
+        await sio.emit('GetWebConn',robotQQ)
+        await sio.sleep(60)
 
 @sio.event
-def connect():
+async def connect():
     logging.info('connected to server')
-    sio.emit('GetWebConn',robotQQ)#取得当前已经登录的QQ链接
-    beat() #心跳包，保持对服务器的连接
+    await sio.emit('GetWebConn',robotQQ)#取得当前已经登录的QQ链接
+    await beat() #心跳包，保持对服务器的连接
 
 @sio.on('OnGroupMsgs')
-def OnGroupMsgs(message):
+async def OnGroupMsgs(message):
     ''' 监听群组消息'''
-
+    
     message = GMess(message)
     if weakCommand != []:
         if message.Content[0] in weakCommand:
@@ -74,16 +74,16 @@ def OnGroupMsgs(message):
     message.FromQQG 来源QQ群
     message.FromNickName 来源QQ昵称
     message.Content 消息内容
-    message.ToQQ 
+    message.ToQQ 自己的QQ
     '''
     
     try:
-        plugin_list[message.Content.split()[0].upper()](message)
+        await plugin_list[message.Content.split()[0].upper()](message)
     except:
-        plugin_list["else"](message)
+        await plugin_list["else"](message)
 
 @sio.on('OnFriendMsgs')
-def OnFriendMsgs(message):
+async def OnFriendMsgs(message):
     ''' 监听好友消息 '''
     
     message = Mess(message)
@@ -93,23 +93,24 @@ def OnFriendMsgs(message):
         else:
             return
     try:
-        plugin_list[message.Content.split()[0].upper()](message)
+        await plugin_list[message.Content.split()[0].upper()](message)
     except:
-        plugin_list["else"](message)
+        await plugin_list["else"](message)
 @sio.on('OnEvents')
-def OnEvents(message):
+async def OnEvents(message):
     ''' 监听相关事件'''
     pass 
 # ----------------------------------------------------- 
-def main():
+async def main():
     try:
-        sio.connect(webApi,transports=['websocket'])
+        
+        await sio.connect(webApi,transports=['websocket'])
         #pdb.set_trace() #这是断点
-        sio.wait()
-    except BaseException as e:
+        await sio.wait()
+    except KeyboardInterrupt as e:
+        await sio.disconnect()
         logging.info(e)
 
 
 if __name__ == '__main__':
-   main()
-   logging.info("exit")
+   loop.run_until_complete(main())
